@@ -67,7 +67,7 @@
 	<define name="USE_VIDEOS" if="cpp"/>
 	<define name="DARK_MODE_WINDOW"/>
 	
-	<define name="DISCORD_RPC" if="windows"/>
+	<!--define name="DISCORD_RPC" if="windows"/-->
 
 	<section if="USE_VIDEOS">
 		<haxelib name="hxCodec" unless="ios"/>
