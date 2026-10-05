@@ -2,7 +2,6 @@ package meta.states;
 
 import lime.media.openal.AL;
 import game.cdev.CDevPopUp;
-import sys.thread.Thread;
 import game.cdev.CDevMods.ModFile;
 import meta.modding.week_editor.WeekData;
 import game.cdev.CDevConfig;
@@ -505,6 +504,7 @@ class FreeplayState extends MusicBeatState
 					daText.screenCenter(X);
 				}
 			}
+			// doLoadingAll 已在 selectedSong() 中同步完成，无需在 update 中再调用
 		}
 
 		if (FlxG.sound.music != null && FlxG.sound.music.playing)
@@ -884,18 +884,15 @@ class FreeplayState extends MusicBeatState
 		currentText = toThis;
 		trace(currentText);
 	}
-	var characters:Array<Character> = [];
-	function doThreading(){
+	// 在主线程同步加载所有资源（最快方案，避免后台线程与渲染的竞争条件）
+	function doLoadingAll(){
 		try {
-			trace("=== Song Loading Thread start ===");
+			trace("=== Song Loading start ===");
 
 			//Character Caching
-			for (chr in [PlayState.SONG.player2,PlayState.SONG.player1,PlayState.SONG.gfVersion]){
-				__updTxt("Loading: Character - "+chr+"");
-				var tempChar:Character = new Character(0,0,chr);
-				tempChar.alpha = 0.00001;
-				add(tempChar);
-				characters.push(tempChar);
+			for (chr in [PlayState.SONG.player2,PlayState.SONG.player1,(PlayState.SONG.gfVersion == null ? 'gf' : PlayState.SONG.gfVersion)]){
+				__updTxt("Loading: Character - "+chr);
+				new Character(0,0,chr);
 				barValue++;
 			}
 	
@@ -911,22 +908,8 @@ class FreeplayState extends MusicBeatState
 			}
 	
 			__updTxt("Finished! Please Wait...");
-			for (i in characters){
-				if (i != null) remove(i);
-			}
-			new FlxTimer().start(1, function(hasd:FlxTimer)
-			{
-				if (FlxG.sound.music != null) FlxG.sound.music.fadeOut(0.2, 0);
-				if (CDevConfig.saveData.smoothAF)
-				{
-					FlxTween.tween(FlxG.camera, {zoom: 1.5}, 1, {ease: FlxEase.quadOut});
-				}
-	
-				playSong();
-			});
 		} catch(e){
 			trace("the hell happened? " + e.toString());
-			
 			var text:String = "Failed loading assets for this song! Error: \n\n"+e.toString();
 			var butt:Array<PopUpButton> = [
 				{text: "Ok", callback: function(){
@@ -934,7 +917,9 @@ class FreeplayState extends MusicBeatState
 				}},
 			];
 			openSubState(new CDevPopUp("Error", text, butt,false, true));
+			return false;
 		}
+		return true;
 	}
 	function selectedSong() // look at how messy this function is
 	{
@@ -1044,7 +1029,18 @@ class FreeplayState extends MusicBeatState
 			});
 		});
 
-		Thread.create(doThreading);
+		// 主线程同步加载所有资源（避免后台线程导致的竞争条件崩溃）
+		if (doLoadingAll()){
+			new FlxTimer().start(1, function(hasd:FlxTimer)
+			{
+				if (FlxG.sound.music != null) FlxG.sound.music.fadeOut(0.2, 0);
+				if (CDevConfig.saveData.smoothAF)
+				{
+					FlxTween.tween(FlxG.camera, {zoom: 1.5}, 1, {ease: FlxEase.quadOut});
+				}
+				playSong();
+			});
+		}
 	}
 
 	function playSong()
