@@ -160,6 +160,9 @@
 	<!--In case you want to use nape with flixel-->
 	<!--<haxelib name="nape-haxe4" />-->
 
+	<!-- Android：androidtools Java 依赖（原 ArkoseLabs lime fork 内置，现改为随项目携带，path 相对本文件目录） -->
+	<dependency name="androidtools" path="dependencies/androidtools" if="android" />
+
 	<!-- ______________________________ Haxedefines _____________________________ -->
 	<haxedef name="HXCPP_CHECK_POINTER" if="CRASH_HANDLER" />
 	<haxedef name="HXCPP_STACK_LINE" if="CRASH_HANDLER" />
@@ -175,6 +178,16 @@
 	
 	<!-- Do whatever you want I'm tired uninstall and install everytime -->
 	<certificate path="key.keystore" password="psychengine" alias="psychport" alias-password="psychengine" if="android" unless="debug" />
+
+	<!-- Android 权限：原 ArkoseLabs lime fork 在 AndroidPlatform.hx 里内置的默认权限，官方 lime 8.3.2 缺少，需在此补回（对应 StorageUtil.requestPermissions） -->
+	<android permission="android.permission.ACCESS_MEDIA_LOCATION" if="android" />
+	<android permission="android.permission.MANAGE_EXTERNAL_STORAGE" if="android" />
+	<android permission="android.permission.READ_MEDIA_IMAGES" if="android" />
+	<android permission="android.permission.READ_MEDIA_VIDEO" if="android" />
+	<android permission="android.permission.READ_MEDIA_AUDIO" if="android" />
+	<android permission="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" if="android" />
+	<android permission="android.permission.READ_EXTERNAL_STORAGE" if="android" />
+	<android permission="android.permission.WRITE_EXTERNAL_STORAGE" if="android" />
 
 	<define name="MOBILE_CONTROLS_ALLOWED" if="mobile" />
 	<haxelib name="mobile-controls" if="mobile" /> <!-- needed for touch things -->

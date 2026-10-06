@@ -210,6 +210,20 @@ class ChartingState extends MusicBeatState
 			_song = CDevConfig.utils.CHART_TEMPLATE;
 		}
 
+		// 统一修复所有 section 可能缺失的字段（比如从其他引擎导入的谱面）
+		for (sec in _song.notes)
+		{
+			// SwagSection 是 typedef，JSON 解析缺字段时不会自动填默认值
+			// 用 Dynamic cast 来做 null 检查（hxcpp 静态平台 Int 不能跟 null 比）
+			var secDyn:Dynamic = sec;
+			if (secDyn.lengthInSteps == null || secDyn.lengthInSteps == 0)
+				sec.lengthInSteps = 16;
+			if (secDyn.sectionEvents == null)
+				sec.sectionEvents = [];
+			if (secDyn.sectionNotes == null)
+				sec.sectionNotes = [];
+		}
+
 		if (_song.song != curSong)
 		{
 			curSong = _song.song;
@@ -866,7 +880,8 @@ class ChartingState extends MusicBeatState
 		sliderSpeed.nameLabel.text = "Song Speed Modifier";
 		sliderSpeed.callback = function(value:Float)
 		{
-			speedMod += value;
+			// `setVariable` already writes the mapped (min..max) value into `speedMod`.
+			// The callback argument is the 0..1 relative position, so don't accumulate it.
 			if (speedMod >= 5)
 				speedMod = 5;
 		}
@@ -1207,17 +1222,18 @@ class ChartingState extends MusicBeatState
 			&& FlxG.sound.music.playing
 			&& FlxG.sound.music.time >= (FlxG.sound.music.length-1))
 		{
-			vocals.pause();
-			vocals.time = 0;
-			FlxG.sound.music.pause();
-			FlxG.sound.music.time = 0;
-			changeSection(0);
+			// Stop instead of pause+time=0 so music can't auto-loop and replay.
+			// changeSection(0, false) skips the music resetting since we're stopped now.
+			if (vocals != null) vocals.stop();
+			FlxG.sound.music.stop();
+			changeSection(0, false);
+			Conductor.songPosition = 0;
 		}
 
 		Conductor.songPosition = FlxG.sound.music.time;
 		_song.song = UI_songTitle.text;
 
-		strumLine.y = getYfromStrum((Conductor.songPosition - sectionStartTime()) % (Conductor.stepCrochet * _song.notes[curSection].lengthInSteps));
+		strumLine.y = getYfromStrum((Conductor.songPosition - sectionStartTime()) % getCurrentSectionDuration());
 
 		if (_song.notes[curSection] != null && _song.notes[curSection].sectionEvents == null)
 		{
@@ -2528,13 +2544,11 @@ class ChartingState extends MusicBeatState
 		if (!justUpdateTheNotes){
 			remove(gridBG);
 			var lis:Dynamic = _song.notes[curSection].lengthInSteps;
-			if (lis == null){
+			// create() 里已经全局修复过，这里只是双保险
+			if (lis == null || lis == 0)
+			{
 				lis = 16;
-				if (!warnOnce)
-					GameLog.warn("JSON of this chart doesn't have lengthInSteps.");
-				warnOnce = true;
-			} else if (lis == 0){
-				lis = 16;
+				_song.notes[curSection].lengthInSteps = lis;
 			}
 	
 			gridBG = FlxGridOverlay.create(GRID_SIZE, GRID_SIZE, GRID_SIZE * 8, GRID_SIZE * Std.parseInt(lis));
@@ -2551,6 +2565,7 @@ class ChartingState extends MusicBeatState
 
 		var sectionInfo:Array<Dynamic> = _song.notes[curSection].sectionNotes;
 		var sectionEv:Array<Dynamic> = _song.notes[curSection].sectionEvents;
+		if (sectionEv == null) sectionEv = [];
 		if (_song.notes[curSection].changeBPM && _song.notes[curSection].bpm > 0)
 		{
 			Conductor.changeBPM(_song.notes[curSection].bpm);
@@ -2999,20 +3014,33 @@ class ChartingState extends MusicBeatState
 		}
 	}
 
+	inline function getCurrentSectionDuration():Float
+	{
+		// SwagSection typedef field is non-nullable Int but JSON-parsed sections may
+		// be missing it at runtime, so access via Dynamic to safely default to 16.
+		var sec:Dynamic = _song.notes[curSection];
+		var lis = sec.lengthInSteps;
+		if (lis == null || lis == 0)
+			lis = 16;
+		return lis * Conductor.stepCrochet;
+	}
+
 	function getStrumTime(yPos:Float):Float
 	{
+		var sectionDur = getCurrentSectionDuration();
 		if (usingDownscroll)
-			return FlxMath.remapToRange(yPos, gridBG.y + gridBG.height, gridBG.y, 0, 16 * Conductor.stepCrochet);
+			return FlxMath.remapToRange(yPos, gridBG.y + gridBG.height, gridBG.y, 0, sectionDur);
 
-		return FlxMath.remapToRange(yPos, gridBG.y, gridBG.y + gridBG.height, 0, 16 * Conductor.stepCrochet);
+		return FlxMath.remapToRange(yPos, gridBG.y, gridBG.y + gridBG.height, 0, sectionDur);
 	}
 
 	function getYfromStrum(strumTime:Float):Float
 	{
+		var sectionDur = getCurrentSectionDuration();
 		if (usingDownscroll)
-			return FlxMath.remapToRange(strumTime, 0, 16 * Conductor.stepCrochet, gridBG.y + gridBG.height, gridBG.y);
+			return FlxMath.remapToRange(strumTime, 0, sectionDur, gridBG.y + gridBG.height, gridBG.y);
 
-		return FlxMath.remapToRange(strumTime, 0, 16 * Conductor.stepCrochet, gridBG.y, gridBG.y + gridBG.height);
+		return FlxMath.remapToRange(strumTime, 0, sectionDur, gridBG.y, gridBG.y + gridBG.height);
 	}
 
 	/*

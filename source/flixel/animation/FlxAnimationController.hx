@@ -3,7 +3,9 @@ package flixel.animation;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.graphics.frames.FlxFrame;
+import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxDestroyUtil.IFlxDestroyable;
+import flixel.util.FlxSignal.FlxTypedSignal;
 
 class FlxAnimationController implements IFlxDestroyable
 {
@@ -62,6 +64,13 @@ class FlxAnimationController implements IFlxDestroyable
 	 * A function that has 1 parameter: a string name - animation name.
 	 */
 	public var finishCallback:(name:String) -> Void;
+
+	/**
+	 * Signals: backported from flixel 5.9.0 API (flixel 5.9.0 的 FlxAnimation / flixel-addons 会引用这些)
+	 */
+	public final onFrameChange = new FlxTypedSignal<(name:String, frameNumber:Int, frameIndex:Int)->Void>();
+	public final onFinish = new FlxTypedSignal<(animName:String)->Void>();
+	public final onLoop = new FlxTypedSignal<(animName:String)->Void>();
 
 	/**
 	 * Internal, reference to owner sprite.
@@ -146,6 +155,10 @@ class FlxAnimationController implements IFlxDestroyable
 		destroyAnimations();
 		_animations = null;
 		callback = null;
+		finishCallback = null;
+		FlxDestroyUtil.destroy(onFrameChange);
+		FlxDestroyUtil.destroy(onFinish);
+		FlxDestroyUtil.destroy(onLoop);
 		_sprite = null;
 	}
 
@@ -667,12 +680,13 @@ class FlxAnimationController implements IFlxDestroyable
 
 	inline function fireCallback():Void
 	{
+		var name:String = (_curAnim != null) ? (_curAnim.name) : null;
+		var number:Int = (_curAnim != null) ? (_curAnim.curFrame) : frameIndex;
 		if (callback != null)
 		{
-			var name:String = (_curAnim != null) ? (_curAnim.name) : null;
-			var number:Int = (_curAnim != null) ? (_curAnim.curFrame) : frameIndex;
 			callback(name, number, frameIndex);
 		}
+		onFrameChange.dispatch(name, number, frameIndex);
 	}
 
 	@:allow(flixel.animation)
@@ -682,6 +696,13 @@ class FlxAnimationController implements IFlxDestroyable
 		{
 			finishCallback(name);
 		}
+		onFinish.dispatch(name);
+	}
+
+	@:allow(flixel.animation)
+	function fireLoopCallback(?name:String):Void
+	{
+		onLoop.dispatch(name);
 	}
 
 	function byNamesHelper(AddTo:Array<Int>, FrameNames:Array<String>):Void

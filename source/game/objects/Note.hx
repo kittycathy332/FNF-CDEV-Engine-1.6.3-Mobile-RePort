@@ -126,7 +126,9 @@ class Note extends FlxSprite
 				script.setVariable("initialize", initialize);
 				script.setVariable("loadTexture", loadTexture);
 				script.setVariable("current", this);
-				ScriptSupport.setScriptDefaultVars(script, PlayState.fromMod, PlayState.SONG.song);
+				// 制谱器中 PlayState.SONG 可能为 null
+				var safeSongName:String = (PlayState.SONG != null) ? PlayState.SONG.song : '';
+				ScriptSupport.setScriptDefaultVars(script, PlayState.fromMod, safeSongName);
 				
 				script.loadFile(scriptPath);
 				
@@ -206,10 +208,16 @@ class Note extends FlxSprite
 			x -= width / 2 + 30;
 			noteYOffset = offset.y;
 
-			if (PlayState.curStage.startsWith('school'))
+			// 制谱器中 PlayState.curStage 可能为 null
+			var curStageSafe:String = (PlayState.curStage != null) ? PlayState.curStage : '';
+			if (curStageSafe.startsWith('school'))
 				x += 30;
 
-			var shit:Float = (CDevConfig.saveData.scrollSpeed == 1 ? PlayState.SONG.speed : CDevConfig.saveData.scrollSpeed);
+			// 制谱器中 PlayState.SONG 可能为 null
+			var songSpeed:Float = 1;
+			if (PlayState.SONG != null)
+				songSpeed = PlayState.SONG.speed;
+			var shit:Float = (CDevConfig.saveData.scrollSpeed == 1 ? songSpeed : CDevConfig.saveData.scrollSpeed);
 			if (prevNote.isSustainNote)
 			{
 				switch (prevNote.noteData)

@@ -20,8 +20,8 @@ echo  (isolated, global ~/haxelib will NOT be touched)
 echo ============================================================
 echo.
 
-echo [ 1/11] flixel (git, pinned 5.6.1) ...
-haxelib git flixel https://github.com/PsychExtendedThings/flixel 5.6.1 --quiet
+echo [ 1/11] flixel 5.9.0 ...
+haxelib install flixel 5.9.0 --quiet
 if errorlevel 1 goto :error
 
 echo [ 2/11] flixel-addons 3.2.2 ...
@@ -29,7 +29,7 @@ haxelib install flixel-addons 3.2.2 --quiet
 if errorlevel 1 goto :error
 
 echo [ 3/11] flixel-ui 2.4.0 ...
-haxelib install flixel-ui 2.4.0 --quiet
+haxelib install flixel-ui 2.6.5 --quiet --skip-dependencies
 if errorlevel 1 goto :error
 
 echo [ 4/11] hscript 2.4.0 ...
@@ -41,35 +41,35 @@ haxelib install tjson 1.4.0 --quiet
 if errorlevel 1 goto :error
 
 echo [ 6/11] hxCodec ...
-haxelib install hxCodec --quiet
+haxelib install hxCodec --quiet --skip-dependencies
 if errorlevel 1 goto :error
 
 echo [ 7/11] hxvlc ...
-haxelib install hxvlc --quiet
+haxelib install hxvlc --quiet --skip-dependencies
 if errorlevel 1 goto :error
 
 echo [ 8/11] hxcpp (git, ShadowEngineTeam fork) ...
-haxelib git hxcpp https://github.com/ShadowEngineTeam/hxcpp --quiet
+haxelib git hxcpp https://github.com/ShadowEngineTeam/hxcpp --quiet --skip-dependencies
 if errorlevel 1 goto :error
 
-echo [ 9/11] lime (git, pinned commit) ...
-haxelib git lime https://github.com/ArkoseLabsOfficial/lime adbdbf23dd5a0ecd6c6b06a6f6704b6db9b6ef94 --quiet
+echo [ 9/11] lime (official 8.3.2) ...
+haxelib install lime 8.3.2 --quiet
 if errorlevel 1 goto :error
 
 echo [10/11] mobile-controls (git) ...
-haxelib install mobile-controls 1.0.0 --quiet
+haxelib install mobile-controls 1.0.0 --quiet --skip-dependencies
 if errorlevel 1 goto :error
 
-echo [11/11] openfl 9.3.3 ...
-haxelib install openfl 9.3.3
+echo [11/11] openfl 9.5.2 ...
+haxelib install openfl 9.5.2
 if errorlevel 1 goto :error
 
 echo [12/12] discord_rpc 1.0.0  ...
-haxelib install discord_rpc 1.0.0 --quiet
+haxelib install discord_rpc 1.0.0 --quiet --skip-dependencies
 if errorlevel 1 goto :error
 
 echo [13/13] HxWebView 0.0.9  ...
-haxelib install HxWebView 0.0.9 --quiet
+haxelib install HxWebView 0.0.9 --quiet --skip-dependencies
 if errorlevel 1 goto :error
 
 echo.
@@ -81,6 +81,7 @@ echo  Build / run with the project-root dev.bat, e.g.:
 echo    dev.bat test windows
 echo ============================================================
 echo.
+pause
 exit /b 0
 
 :error
@@ -88,3 +89,4 @@ echo.
 echo [FAILED] A haxelib command exited with errorlevel %errorlevel%.
 echo Scroll up to see the actual error. The global haxelib was NOT modified.
 exit /b 1
+

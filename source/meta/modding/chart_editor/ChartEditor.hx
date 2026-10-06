@@ -711,7 +711,8 @@ class ChartEditor extends MusicBeatState {
 		sliderSpeed.nameLabel.text = "Song Speed Modifier";
 		sliderSpeed.callback = function(value:Float)
 		{
-			speedMod += value;
+			// `setVariable` already writes the mapped (min..max) value into `speedMod`.
+			// The callback argument is the 0..1 relative position, so don't accumulate it.
 			if (speedMod >= 5)
 				speedMod = 5;
 		}

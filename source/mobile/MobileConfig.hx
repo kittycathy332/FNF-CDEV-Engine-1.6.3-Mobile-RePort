@@ -205,6 +205,9 @@ typedef ButtonsData =
 	buttonUniqueID:Dynamic, // the button's special ID for button
 	graphic:String, // the graphic of the button, usually can be located in the MobilePad xml.
 	position:Array<Null<Float>>, // the button's X/Y position on screen.
+	// 兼容 haxelib mobile-controls 的 x/y 字段
+	x:Null<Float>,
+	y:Null<Float>,
 	color:String, // the button color, default color is white.
 	scale:Null<Float>, //the button scale, default scale is 1.
 	returnKey:String // the button return, default return is nothing but If you're game using a lua scripting this will be useful.

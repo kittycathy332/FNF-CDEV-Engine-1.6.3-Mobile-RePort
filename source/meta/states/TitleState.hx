@@ -355,7 +355,15 @@ class TitleState extends MusicBeatState
 				trace('error: $error');
 			}
 
-			http.request();
+			try
+			{
+				http.request();
+			}
+			catch (e:Dynamic)
+			{
+				// 网络检查失败（如 Android/hxcpp 下 Socket 不可用会同步抛 Invalid socket handle）不应阻塞游戏启动
+				trace('version check failed: $e');
+			}
 		}
 	}
 
